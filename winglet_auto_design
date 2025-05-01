@@ -1,0 +1,40 @@
+for idx in range(N_SAMPLES):
+    # 샘플 값 불러오기
+    sweep_angle = scaled_samples["SweepAngle"][idx]
+    winglet_length = scaled_samples["WingletLength"][idx]
+    cant_angle = scaled_samples["CantAngle"][idx]
+    taper_ratio = scaled_samples["TaperRatio"][idx]
+
+    # 템플릿 VSP 파일 로드
+    vsp.ClearVSPModel()
+    vsp.ReadVSPFile(TEMPLATE_VSP3)
+
+    # MainWing Geom ID 찾기
+    mainwing_id = vsp.FindGeom("MainWing", 0)
+
+    # XSecSurf ID 가져오기
+    xsec_surf_id = vsp.GetXSecSurf(mainwing_id, 0)
+
+    # Section2, Section3 ID 가져오기
+    section2_id = vsp.GetXSec(xsec_surf_id, 2)
+    section3_id = vsp.GetXSec(xsec_surf_id, 3)
+
+    # 파라미터 ID 추출 및 값 설정
+    sweep_id = vsp.GetParm(section3_id, "Sweep", "XSec")
+    span_id = vsp.GetParm(section3_id, "Span", "XSec")
+    dihedral2_id = vsp.GetParm(section2_id, "Dihedral", "XSec")
+    dihedral3_id = vsp.GetParm(section3_id, "Dihedral", "XSec")
+    taper_id = vsp.GetParm(section3_id, "Taper", "XSec")
+
+    vsp.SetParmVal(sweep_id, sweep_angle)
+    vsp.SetParmVal(span_id, winglet_length)
+    vsp.SetParmVal(dihedral2_id, cant_angle / 2)
+    vsp.SetParmVal(dihedral3_id, cant_angle / 2)
+    vsp.SetParmVal(taper_id, taper_ratio)
+
+    vsp.Update()
+
+    # 저장
+    save_path = os.path.join(OUTPUT_DIR, f"sample_{idx:03d}.vsp3")
+    vsp.WriteVSPFile(save_path)
+    print(f"샘플 {idx} 저장 완료!")
