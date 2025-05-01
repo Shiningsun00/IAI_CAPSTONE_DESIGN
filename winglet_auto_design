@@ -1,3 +1,43 @@
+import os
+import numpy as np
+import pandas as pd
+import vsp
+from pyDOE2 import lhs
+
+TEMPLATE_VSP3 = "avanger_for_experiment.vsp3"  # 템플릿 파일명
+OUTPUT_DIR = "generated_avenger_files"    # 생성 파일 저장 폴더
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+## LHS Data Sampling ##
+
+PARAM_BOUNDS = {
+    "SweepAngle": (20.0, 40.0),           # deg
+    "WingletLength": (0.5 * 12.4, 12.4),  # cm
+    "CantAngle": (-90.0, 90.0),           # deg
+    "TaperRatio": (0.3, 0.6)              # unitless
+}
+
+N_SAMPLES = 60 # 생성할 샘플 수
+
+np.random.seed(42)
+num_vars = len(PARAM_BOUNDS)
+lhs_samples = lhs(num_vars, samples=N_SAMPLES)
+
+# 스케일링
+param_names = list(PARAM_BOUNDS.keys())
+scaled_samples = {}
+for i, name in enumerate(param_names):
+    low, high = PARAM_BOUNDS[name]
+    scaled_samples[name] = low + (high - low) * lhs_samples[:, i]
+
+# 결과 저장
+
+sampling_df = pd.DataFrame(scaled_samples)
+sampling_df.index.name = "Index"
+sampling_df.to_csv(os.path.join(OUTPUT_DIR, "winglet_lhs_samples.csv"))
+print("Winglet 파라미터 LHS 샘플링 완료 및 CSV 저장!")
+
 for idx in range(N_SAMPLES):
     # 샘플 값 불러오기
     sweep_angle = scaled_samples["SweepAngle"][idx]
